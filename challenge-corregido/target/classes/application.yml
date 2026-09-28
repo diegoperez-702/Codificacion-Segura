@@ -1,7 +1,34 @@
 spring:
-  security:
-    user:
-      name: user
-      password: password
   profiles:
     active: dev
+
+# Configuracion de la aplicacion.
+#
+# Mitigacion de "Exposicion de datos sensibles":
+# - No se hardcodean credenciales ni secretos en el codigo fuente.
+# - Los valores sensibles se leen de variables de entorno. Los defaults que
+#   aparecen aqui son SOLO para desarrollo local y deben sobrescribirse en
+#   entornos reales (produccion) mediante variables de entorno o un gestor de
+#   secretos (Vault, AWS Secrets Manager, etc.).
+app:
+  jwt:
+    # Secreto para firmar los JWT (HS256, minimo 32 bytes). Sobrescribir en prod.
+    secret: ${APP_JWT_SECRET:dev-only-secret-change-me-32bytes-minimum!!}
+    # Expiracion del token en milisegundos (1 hora por defecto).
+    expiration-ms: ${APP_JWT_EXPIRATION_MS:3600000}
+  auth:
+    # Credenciales del usuario de demo. La contrasena se define como hash BCrypt.
+    # Sobrescribir en prod; idealmente sustituir por un almacen de usuarios real.
+    username: ${APP_AUTH_USERNAME:user}
+    # Hash BCrypt de la contrasena "password" (solo para desarrollo).
+    password-hash: ${APP_AUTH_PASSWORD_HASH:$2a$10$ZMYrxJ9/ANAap7gNEZcXwuQZx9FS1k6YgWEmzzu1lzfagyfbXll7i}
+
+  # Rate limiting: numero maximo de peticiones por IP dentro de la ventana.
+  rate-limit:
+    capacity: ${APP_RATE_LIMIT_CAPACITY:20}
+    window-seconds: ${APP_RATE_LIMIT_WINDOW_SECONDS:60}
+
+logging:
+  level:
+    # Evita fugas de informacion sensible bajando el detalle de logs de seguridad.
+    org.springframework.security: INFO
